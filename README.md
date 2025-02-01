@@ -141,7 +141,7 @@ GET    /health                               # Health check
 ## Getting started
 
 ```bash
-git clone https://github.com/joel767443/hookstream.git
+git clone https://github.com/ykachala/hookstream.git
 cd hookstream
 cp .env.example .env
 docker compose up
@@ -251,8 +251,8 @@ hookstream/
 
 ## Related
 
-- [nexus-scheduler](https://github.com/joel767443/nexus-scheduler) — uses Hookstream to deliver booking events to subscribers  
-- [saas-multitenant-kit](https://github.com/joel767443/saas-multitenant-kit) — Hookstream integrates as the outbound event layer
+- [nexus-scheduler](https://github.com/ykachala/nexus-scheduler) — uses Hookstream to deliver booking events to subscribers  
+- [saas-multitenant-kit](https://github.com/ykachala/saas-multitenant-kit) — Hookstream integrates as the outbound event layer
 
 ---
 
