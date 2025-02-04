@@ -142,3 +142,18 @@ subscribersRouter.patch('/:id/pause', async (req: Request, res: Response): Promi
     message: 'Subscriber updated successfully.',
   });
 });
+
+/** POST /api/v1/subscribers/:id/rotate-secret */
+subscribersRouter.post('/:id/rotate-secret', async (req: Request, res: Response): Promise<void> => {
+  const tenant = res.locals['tenant'] as Tenant;
+  const result = await service.rotateSecret(req.params['id']!, tenant.id);
+  if (!result) {
+    res.status(404).json({ error: 'Subscriber not found' });
+    return;
+  }
+  res.status(200).json({
+    success: true,
+    data: { secret: result.newSecret },
+    message: 'Secret rotated successfully.',
+  });
+});
