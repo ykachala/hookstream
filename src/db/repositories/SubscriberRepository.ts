@@ -26,6 +26,7 @@ export interface SubscriberListItem {
 export interface SubscriberPatch {
   isActive?: boolean;
   isVerified?: boolean;
+  secret?: string;
 }
 
 type SubscriberRow = {
@@ -127,6 +128,10 @@ export class SubscriberRepository {
     if (patch.isVerified !== undefined) {
       setClauses.push(`is_verified = $${idx++}`);
       values.push(patch.isVerified);
+    }
+    if (patch.secret !== undefined) {
+      setClauses.push(`secret = $${idx++}`);
+      values.push(patch.secret);
     }
 
     if (values.length === 0) {
