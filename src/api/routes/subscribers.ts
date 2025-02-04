@@ -103,6 +103,17 @@ subscribersRouter.delete('/:id', async (req: Request, res: Response): Promise<vo
   res.status(204).send();
 });
 
+/** POST /api/v1/subscribers/:id/verify */
+subscribersRouter.post('/:id/verify', async (req: Request, res: Response): Promise<void> => {
+  const tenant = res.locals['tenant'] as Tenant;
+  const verified = await service.sendVerificationChallenge(req.params['id']!, tenant.id);
+  if (!verified) {
+    res.status(400).json({ error: 'Verification failed' });
+    return;
+  }
+  res.status(200).json({ success: true, data: { verified: true }, message: 'Subscriber verified successfully.' });
+});
+
 /** PATCH /api/v1/subscribers/:id/pause */
 subscribersRouter.patch('/:id/pause', async (req: Request, res: Response): Promise<void> => {
   const tenant = res.locals['tenant'] as Tenant;

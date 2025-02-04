@@ -50,4 +50,24 @@ export class SubscriberService {
     if (!sub) return null;
     return { newSecret };
   }
+
+  async sendVerificationChallenge(id: string, tenantId: string): Promise<boolean> {
+    const sub = await this.repo.findById(id, tenantId);
+    if (!sub) return false;
+    const challenge = crypto.randomBytes(16).toString('hex');
+    try {
+      const res = await fetch(sub.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'webhook.verify', challenge }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      const body = await res.json() as { challenge?: string };
+      if (body.challenge !== challenge) return false;
+      await this.repo.update(id, tenantId, { isVerified: true });
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
