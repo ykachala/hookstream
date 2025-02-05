@@ -4,6 +4,7 @@ import { Config } from '@/config';
 import { errorHandler } from '@/api/middleware/errorHandler';
 import { healthRouter } from '@/api/routes/health';
 import { subscribersRouter } from '@/api/routes/subscribers';
+import { eventsRouter } from '@/api/routes/events';
 import { logger } from '@/logger';
 
 export function createApp(config: Config): Express {
@@ -15,6 +16,7 @@ export function createApp(config: Config): Express {
 
   app.use(healthRouter);
   app.use('/api/v1/subscribers', subscribersRouter);
+  app.use('/api/v1/events', eventsRouter);
 
   app.use(errorHandler);
 
