@@ -203,7 +203,7 @@ Benchmarked on a 4-vCPU / 8GB instance with 3 worker replicas:
 
 | Metric | Value |
 |--------|-------|
-| Ingest throughput | 4,200 events/sec |
+| Ingest throughput | 4,100 events/sec |
 | Delivery throughput (200 OK endpoints) | 1,800 deliveries/sec |
 | p95 ingest latency | 8ms |
 | p95 delivery latency (fast endpoint) | 145ms |
