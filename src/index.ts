@@ -2,6 +2,7 @@ import { loadConfig } from '@/config';
 import { createApp } from '@/api/server';
 import { connectDb, disconnectDb } from '@/db/client';
 import { initQueue, closeQueue } from '@/queue/queues';
+import { createDeliveryWorker } from '@/workers/deliveryWorker';
 import { logger } from '@/logger';
 
 async function main(): Promise<void> {
@@ -13,6 +14,9 @@ async function main(): Promise<void> {
   initQueue(config);
   logger.info('Queue initialized');
 
+  const worker = createDeliveryWorker(config.workerConcurrency);
+  logger.info({ concurrency: config.workerConcurrency }, 'Delivery worker started');
+
   const app = createApp(config);
   const server = app.listen(config.port, () => {
     logger.info({ port: config.port }, 'Server listening');
@@ -22,6 +26,7 @@ async function main(): Promise<void> {
     logger.info({ signal }, 'Graceful shutdown initiated');
     server.close(async () => {
       try {
+        await worker.close();
         await closeQueue();
         await disconnectDb();
         logger.info('Shutdown complete');
