@@ -15,7 +15,7 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  setupFilesAfterEach: [],
+  setupFilesAfterEnv: [],
   testTimeout: 30000,
   verbose: true,
 };
