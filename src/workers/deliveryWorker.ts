@@ -5,11 +5,29 @@ import { DeliveryRepository } from '@/db/repositories/DeliveryRepository';
 import { signPayload } from '@/workers/hmac';
 import { logger } from '@/logger';
 import { getBackoffDelay } from '@/workers/backoff';
+import { CircuitBreaker } from '@/services/CircuitBreaker';
 
 const deliveryRepo = new DeliveryRepository();
 
+let circuitBreaker: CircuitBreaker;
+
+function getCircuitBreaker(): CircuitBreaker {
+  if (!circuitBreaker) {
+    circuitBreaker = new CircuitBreaker(getRedisClient());
+  }
+  return circuitBreaker;
+}
+
 export async function processDelivery(job: Job<DeliveryJobData>): Promise<void> {
-  const { deliveryId, url, secret, payload, eventType, tenantId } = job.data;
+  const { deliveryId, subscriberId, url, secret, payload, eventType, tenantId } = job.data;
+  const cb = getCircuitBreaker();
+
+  const state = await cb.getState(subscriberId);
+  if (state === 'OPEN') {
+    logger.warn({ deliveryId, tenantId, subscriberId, url }, 'Circuit breaker OPEN, skipping delivery');
+    throw new Error('Circuit breaker OPEN');
+  }
+
   const body = JSON.stringify({ event_type: eventType, payload });
   const signature = signPayload(body, secret);
 
@@ -37,6 +55,7 @@ export async function processDelivery(job: Job<DeliveryJobData>): Promise<void> 
       responseBody = await response.text().catch(() => null);
 
       if (response.ok) {
+        await cb.recordSuccess(subscriberId);
         await deliveryRepo.markDelivered(deliveryId, responseStatus, responseBody ?? '');
         return;
       }
@@ -47,6 +66,8 @@ export async function processDelivery(job: Job<DeliveryJobData>): Promise<void> 
   } catch (err) {
     errorMessage = err instanceof Error ? err.message : String(err);
   }
+
+  await cb.recordFailure(subscriberId);
 
   const attemptCount = job.attemptsMade + 1;
   const isLastAttempt = attemptCount >= (job.opts.attempts ?? 5);
