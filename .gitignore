@@ -7,6 +7,7 @@ coverage/
 *.log
 npm-debug.log*
 .DS_Store
+*.swp
 .idea/
 .vscode/
 *.tsbuildinfo
