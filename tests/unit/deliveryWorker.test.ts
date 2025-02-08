@@ -22,6 +22,14 @@ jest.mock('@/queue/queues', () => ({
   closeQueue: jest.fn(),
 }));
 
+jest.mock('@/services/CircuitBreaker', () => ({
+  CircuitBreaker: jest.fn().mockImplementation(() => ({
+    getState: jest.fn().mockResolvedValue('CLOSED'),
+    recordSuccess: jest.fn().mockResolvedValue(undefined),
+    recordFailure: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 import { processDelivery } from '@/workers/deliveryWorker';
 
 const makeJob = (overrides?: Partial<Job<DeliveryJobData>>): Job<DeliveryJobData> =>
