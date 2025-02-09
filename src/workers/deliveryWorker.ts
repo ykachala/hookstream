@@ -6,6 +6,7 @@ import { signPayload } from '@/workers/hmac';
 import { logger } from '@/logger';
 import { getBackoffDelay } from '@/workers/backoff';
 import { CircuitBreaker } from '@/services/CircuitBreaker';
+import { deliveriesTotal, deliveryDuration } from '@/metrics/registry';
 
 const deliveryRepo = new DeliveryRepository();
 
@@ -25,6 +26,7 @@ export async function processDelivery(job: Job<DeliveryJobData>): Promise<void> 
   const state = await cb.getState(subscriberId);
   if (state === 'OPEN') {
     logger.warn({ deliveryId, tenantId, subscriberId, url }, 'Circuit breaker OPEN, skipping delivery');
+    deliveriesTotal.inc({ status: 'circuit_open', tenant_id: tenantId });
     throw new Error('Circuit breaker OPEN');
   }
 
@@ -35,6 +37,7 @@ export async function processDelivery(job: Job<DeliveryJobData>): Promise<void> 
   let responseBody: string | null = null;
   let errorMessage: string | null = null;
 
+  const timer = deliveryDuration.startTimer();
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -55,15 +58,19 @@ export async function processDelivery(job: Job<DeliveryJobData>): Promise<void> 
       responseBody = await response.text().catch(() => null);
 
       if (response.ok) {
+        timer({ status: 'delivered' });
         await cb.recordSuccess(subscriberId);
         await deliveryRepo.markDelivered(deliveryId, responseStatus, responseBody ?? '');
+        deliveriesTotal.inc({ status: 'delivered', tenant_id: tenantId });
         return;
       }
+      timer({ status: 'failed' });
       errorMessage = `HTTP ${responseStatus}`;
     } finally {
       clearTimeout(timeout);
     }
   } catch (err) {
+    timer({ status: 'failed' });
     errorMessage = err instanceof Error ? err.message : String(err);
   }
 
@@ -75,6 +82,7 @@ export async function processDelivery(job: Job<DeliveryJobData>): Promise<void> 
   if (isLastAttempt) {
     await deliveryRepo.markDeadLetter(deliveryId, errorMessage ?? 'Unknown error');
     logger.warn({ deliveryId, tenantId, url, attemptCount }, 'Delivery dead-lettered');
+    deliveriesTotal.inc({ status: 'dead_letter', tenant_id: tenantId });
   } else {
     const nextDelay = getBackoffDelay(attemptCount);
     const nextAttemptAt = new Date(Date.now() + nextDelay);
@@ -85,6 +93,7 @@ export async function processDelivery(job: Job<DeliveryJobData>): Promise<void> 
       responseStatus,
       errorMessage ?? 'Unknown error',
     );
+    deliveriesTotal.inc({ status: 'failed', tenant_id: tenantId });
   }
 
   throw new Error(errorMessage ?? 'Delivery failed');
