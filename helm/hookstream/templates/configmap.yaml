@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hookstream.fullname" . }}-config
+  labels:
+    {{- include "hookstream.labels" . | nindent 4 }}
+data:
+  PORT: {{ .Values.env.PORT | quote }}
+  NODE_ENV: {{ .Values.env.NODE_ENV | quote }}
+  LOG_LEVEL: {{ .Values.env.LOG_LEVEL | quote }}
+  WORKER_CONCURRENCY: {{ .Values.env.WORKER_CONCURRENCY | quote }}
+  DELIVERY_TIMEOUT_MS: {{ .Values.env.DELIVERY_TIMEOUT_MS | quote }}

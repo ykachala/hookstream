@@ -1,0 +1,54 @@
+replicaCount:
+  api: 2
+  worker: 3
+
+image:
+  repository: ghcr.io/ykachala/hookstream
+  pullPolicy: IfNotPresent
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  api:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  worker:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+postgresql:
+  host: ""
+  port: 5432
+  database: hookstream
+  existingSecret: hookstream-db-secret
+  secretKey: database-url
+
+redis:
+  host: ""
+  port: 6379
+  existingSecret: hookstream-redis-secret
+  secretKey: redis-url
+
+env:
+  PORT: "3000"
+  NODE_ENV: production
+  LOG_LEVEL: info
+  WORKER_CONCURRENCY: "5"
+  DELIVERY_TIMEOUT_MS: "30000"
