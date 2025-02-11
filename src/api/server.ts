@@ -6,6 +6,7 @@ import { healthRouter } from '@/api/routes/health';
 import { subscribersRouter } from '@/api/routes/subscribers';
 import { eventsRouter } from '@/api/routes/events';
 import { deliveriesRouter } from '@/api/routes/deliveries';
+import { deadLetterRouter } from '@/api/routes/deadLetter';
 import { metricsRouter } from '@/api/routes/metrics';
 import { logger } from '@/logger';
 
@@ -20,6 +21,7 @@ export function createApp(config: Config): Express {
   app.use('/api/v1/subscribers', subscribersRouter);
   app.use('/api/v1/events', eventsRouter);
   app.use('/api/v1/deliveries', deliveriesRouter);
+  app.use('/api/v1/dead-letter', deadLetterRouter);
   app.use(metricsRouter);
 
   app.use(errorHandler);
