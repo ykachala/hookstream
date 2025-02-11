@@ -62,6 +62,9 @@ services:
       - '3002:3000'
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./dashboards:/etc/grafana/provisioning/dashboards:ro
+    environment:
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/hookstream.json
     restart: unless-stopped
 
 volumes:
