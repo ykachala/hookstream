@@ -1,7 +1,12 @@
+import http from 'http';
+import express from 'express';
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { ExpressAdapter } from '@bull-board/express';
 import { loadConfig } from '@/config';
 import { createApp } from '@/api/server';
 import { connectDb, disconnectDb } from '@/db/client';
-import { initQueue, closeQueue } from '@/queue/queues';
+import { initQueue, closeQueue, deliveryQueue } from '@/queue/queues';
 import { createDeliveryWorker } from '@/workers/deliveryWorker';
 import { logger } from '@/logger';
 
@@ -14,6 +19,20 @@ async function main(): Promise<void> {
   initQueue(config);
   logger.info('Queue initialized');
 
+  const serverAdapter = new ExpressAdapter();
+  serverAdapter.setBasePath('/');
+  createBullBoard({
+    queues: [new BullMQAdapter(deliveryQueue)],
+    serverAdapter,
+  });
+
+  const boardApp = express();
+  boardApp.use('/', serverAdapter.getRouter());
+  const boardServer = http.createServer(boardApp);
+  boardServer.listen(3001, () => {
+    logger.info('BullMQ Board listening on port 3001');
+  });
+
   const worker = createDeliveryWorker(config.workerConcurrency);
   logger.info({ concurrency: config.workerConcurrency }, 'Delivery worker started');
 
@@ -24,6 +43,7 @@ async function main(): Promise<void> {
 
   async function shutdown(signal: string): Promise<void> {
     logger.info({ signal }, 'Graceful shutdown initiated');
+    boardServer.close();
     server.close(async () => {
       try {
         await worker.close();
