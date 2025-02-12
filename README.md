@@ -11,6 +11,7 @@
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat&logo=prometheus&logoColor=white)
 ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat&logo=grafana&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/CI%2FCD-2088FF?style=flat&logo=github-actions&logoColor=white)
+[![CI](https://github.com/ykachala/hookstream/actions/workflows/ci.yml/badge.svg)](https://github.com/ykachala/hookstream/actions/workflows/ci.yml)
 
 ---
 
