@@ -210,6 +210,8 @@ Benchmarked on a 4-vCPU / 8GB instance with 3 worker replicas:
 | p95 delivery latency (fast endpoint) | 145ms |
 | Queue drain time (10k backlog) | ~6 seconds |
 
+Load test: `k6 run tests/load/ingest.js` — no sleep, targets ingest saturation. Captured output from the baseline run: [`benchmarks/results/baseline-2025-02-13.txt`](benchmarks/results/baseline-2025-02-13.txt).
+
 ---
 
 ## Kubernetes deployment
