@@ -132,10 +132,36 @@ PATCH  /api/v1/subscribers/:id/pause         # Pause delivery
 POST   /api/v1/subscribers/:id/rotate-secret # Rotate HMAC secret
 GET    /api/v1/deliveries                    # Delivery log (filterable)
 POST   /api/v1/deliveries/:id/replay         # Replay a failed delivery
+POST   /api/v1/deliveries/diagnose           # AI-powered failure diagnosis
 GET    /api/v1/dead-letter                   # Dead letter queue
 GET    /metrics                              # Prometheus metrics
 GET    /health                               # Health check
 ```
+
+### AI delivery diagnostics
+
+`POST /api/v1/deliveries/diagnose` sends an endpoint's recent failure history to Claude and returns a structured root-cause diagnosis — useful when a subscriber endpoint is in the dead-letter queue and you need to understand why without manually querying delivery logs.
+
+```bash
+curl -X POST http://localhost:3000/api/v1/deliveries/diagnose \
+  -H "Authorization: Bearer $API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"subscriber_id": "sub_abc123"}'
+```
+
+```json
+{
+  "data": {
+    "summary": "Endpoint returning 401 consistently across all 14 attempts over 6 hours.",
+    "likely_cause": "Authentication token has expired or been rotated on the receiving end.",
+    "pattern": "auth",
+    "recommended_action": "Rotate the signing secret on the subscriber and update the token on the receiving endpoint.",
+    "confidence": "high"
+  }
+}
+```
+
+Requires `ANTHROPIC_API_KEY` in `.env`. Returns `501` if not configured.
 
 ---
 
