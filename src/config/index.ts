@@ -6,6 +6,8 @@ export interface Config {
   redisUrl: string;
   workerConcurrency: number;
   deliveryTimeoutMs: number;
+  // Optional — enables the AI delivery diagnostics endpoint
+  anthropicApiKey: string | undefined;
 }
 
 export function loadConfig(): Config {
@@ -20,5 +22,6 @@ export function loadConfig(): Config {
     redisUrl: process.env['REDIS_URL']!,
     workerConcurrency: parseInt(process.env['WORKER_CONCURRENCY'] ?? '5', 10),
     deliveryTimeoutMs: parseInt(process.env['DELIVERY_TIMEOUT_MS'] ?? '30000', 10),
+    anthropicApiKey: process.env['ANTHROPIC_API_KEY'],
   };
 }

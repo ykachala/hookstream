@@ -4,6 +4,8 @@ import { DeliveryRepository, DeliveryStatus } from '@/db/repositories/DeliveryRe
 import { SubscriberRepository } from '@/db/repositories/SubscriberRepository';
 import { EventRepository } from '@/db/repositories/EventRepository';
 import { enqueueDelivery } from '@/queue/producers';
+import { loadConfig } from '@/config/index';
+import { diagnoseEndpointFailures } from '@/ai/diagnostics';
 import type { Tenant } from '@/db/repositories/TenantRepository';
 
 const deliveryRepo = new DeliveryRepository();
@@ -13,6 +15,47 @@ const eventRepo = new EventRepository();
 export const deliveriesRouter = Router();
 
 deliveriesRouter.use(authMiddleware);
+
+// POST /diagnose must be registered before /:id to avoid the param catching "diagnose"
+deliveriesRouter.post('/diagnose', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const config = loadConfig();
+    if (!config.anthropicApiKey) {
+      res.status(501).json({ error: 'AI diagnostics not enabled — set ANTHROPIC_API_KEY' });
+      return;
+    }
+
+    const tenant = res.locals['tenant'] as Tenant;
+    const { subscriber_id, limit = 20 } = req.body as { subscriber_id?: string; limit?: number };
+
+    if (!subscriber_id) {
+      res.status(400).json({ error: 'subscriber_id is required' });
+      return;
+    }
+
+    const subscriber = await subscriberRepo.findById(subscriber_id, tenant.id);
+    if (!subscriber) {
+      res.status(404).json({ error: 'Subscriber not found' });
+      return;
+    }
+
+    const failures = await deliveryRepo.findRecentFailures(
+      tenant.id,
+      subscriber_id,
+      Math.min(Number(limit) || 20, 50),
+    );
+
+    if (failures.length === 0) {
+      res.json({ success: true, data: null, message: 'No recent failures for this endpoint.' });
+      return;
+    }
+
+    const diagnosis = await diagnoseEndpointFailures(subscriber.url, failures, config.anthropicApiKey);
+    res.json({ success: true, data: diagnosis });
+  } catch (err) {
+    next(err);
+  }
+});
 
 deliveriesRouter.get('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

@@ -28,6 +28,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
     "@bull-board/api": "^7.1.5",
     "@bull-board/express": "^7.1.5",
     "bullmq": "^5.4.0",

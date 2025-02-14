@@ -222,4 +222,20 @@ export class DeliveryRepository {
       error,
     });
   }
+
+  async findRecentFailures(
+    tenantId: string,
+    subscriberId: string,
+    limit: number,
+  ): Promise<Delivery[]> {
+    const { rows } = await getPool().query<DeliveryRow>(
+      `SELECT * FROM deliveries
+       WHERE tenant_id = $1 AND subscriber_id = $2
+         AND status IN ('failed', 'dead_letter')
+       ORDER BY last_attempt_at DESC NULLS LAST
+       LIMIT $3`,
+      [tenantId, subscriberId, limit],
+    );
+    return rows.map(rowToDelivery);
+  }
 }
