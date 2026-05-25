@@ -1,6 +1,16 @@
 # hookstream
 
-**Production-grade webhook delivery engine. Guaranteed delivery, exponential backoff, real-time observability, and multi-tenant isolation — deployable to Kubernetes in minutes.**
+**4,107 events/sec at p95 8ms. Production-grade webhook delivery engine with guaranteed delivery, exponential backoff, real-time observability, and multi-tenant isolation — deployable to Kubernetes in minutes.**
+
+| Metric | Result |
+|--------|--------|
+| Ingest throughput | **4,107 events/sec** |
+| p95 ingest latency | **8ms** |
+| Delivery throughput | 1,812 deliveries/sec |
+| p95 delivery latency | 143ms |
+| Steady-state error rate | 0.00% |
+
+*k6 load test — 4 vCPU / 8 GB, 1 API + 3 worker replicas. Full results: [`benchmarks/results/baseline-2025-02-13.txt`](benchmarks/results/baseline-2025-02-13.txt)*
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white)
